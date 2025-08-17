@@ -1,0 +1,66 @@
+stages:
+  load_data:
+    cmd: python src/data/data_loader.py
+    deps:
+    - src/data/data_loader.py
+    - configs/data_schema.yaml
+    outs:
+    - data/raw/dataset.csv:
+        cache: false
+    params:
+    - data_config.source_url
+    - data_config.raw_data_path
+
+  validate_data:
+    cmd: python src/data/validation.py
+    deps:
+    - src/data/validation.py
+    - data/raw/dataset.csv
+    - configs/data_schema.yaml
+    outs:
+    - data/validation/stats.pb
+    - data/validation/schema.pb
+    params:
+    - validation.drift_threshold
+    - validation.anomaly_threshold
+
+  preprocess:
+    cmd: python src/features/preprocessing.py
+    deps:
+    - src/features/preprocessing.py
+    - data/raw/dataset.csv
+    - data/validation/schema.pb
+    outs:
+    - data/processed/train.pkl
+    - data/processed/test.pkl
+    - data/processed/scaler.pkl
+    params:
+    - preprocessing.test_size
+    - preprocessing.random_state
+
+  train:
+    cmd: python src/models/train.py
+    deps:
+    - src/models/train.py
+    - data/processed/train.pkl
+    - configs/model_config.yaml
+    outs:
+    - models/classifier.pkl
+    - models/metrics.json
+    params:
+    - model.algorithm
+    - model.hyperparameters
+
+  evaluate:
+    cmd: python src/models/evaluate.py
+    deps:
+    - src/models/evaluate.py
+    - models/classifier.pkl
+    - data/processed/test.pkl
+    outs:
+    - reports/evaluation.json
+    - reports/confusion_matrix.png
+    - reports/classification_report.json
+    metrics:
+    - reports/metrics.json:
+        cache: false

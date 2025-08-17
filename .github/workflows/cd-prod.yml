@@ -1,0 +1,48 @@
+name: Deploy ML API
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Docker image tag"
+        required: true
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and tag Docker image
+        run: |
+          IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/ml-api
+          docker build -f docker/api/Dockerfile -t $IMAGE:${{ github.event.inputs.tag }} .
+          docker tag $IMAGE:${{ github.event.inputs.tag }} $IMAGE:latest
+
+      - name: Push Docker image
+        run: |
+          IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/ml-api
+          docker push $IMAGE:${{ github.event.inputs.tag }}
+          docker push $IMAGE:latest
+
+  # Optional deploy job
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy on server (Docker Compose)
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/ml-api:latest
+            docker-compose -f /opt/mlops/docker-compose.yml up -d

@@ -1,0 +1,41 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Installer les dépendances système nécessaires
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    gcc \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copier et installer les requirements spécifiques à l'API
+COPY requirements-api.txt .
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements-api.txt
+
+# Créer un utilisateur non-root pour la sécurité
+RUN useradd --create-home --shell /bin/bash app && \
+    chown -R app:app /app
+USER app
+
+# Copier le code source
+COPY --chown=app:app src/api/ ./
+COPY --chown=app:app src/models/ ./models_src/
+
+# Créer les répertoires nécessaires
+RUN mkdir -p models data/processed
+
+# Variables d'environnement
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Exposer le port
+EXPOSE 8000
+
+# Commande de démarrage
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

@@ -1,0 +1,84 @@
+# Schéma et configuration des données
+
+data_source:
+  type: "csv"
+  raw_data_path: "data/raw/dataset.csv"
+  processed_data_path: "data/processed/"
+
+schema:
+  expected_columns:
+    - feature_0
+    - feature_1
+    - feature_2
+    - feature_3
+    - feature_4
+    - feature_5
+    - feature_6
+    - feature_7
+    - feature_8
+    - feature_9
+    - feature_10
+    - feature_11
+    - feature_12
+    - feature_13
+    - feature_14
+    - feature_15
+    - feature_16
+    - feature_17
+    - feature_18
+    - feature_19
+    - target
+
+  feature_types:
+    numeric_features:
+      - feature_0
+      - feature_1
+      - feature_2
+      - feature_3
+      - feature_4
+      - feature_5
+      - feature_6
+      - feature_7
+      - feature_8
+      - feature_9
+      - feature_10
+      - feature_11
+      - feature_12
+      - feature_13
+      - feature_14
+      - feature_15
+      - feature_16
+      - feature_17
+      - feature_18
+      - feature_19
+    
+    categorical_features: []
+    
+    target_column: "target"
+    target_type: "categorical"
+
+validation:
+  drift_threshold: 0.1
+  anomaly_threshold: 0.05
+  missing_value_threshold: 0.1
+  
+  numeric_constraints:
+    min_samples: 1000
+    max_samples: 100000
+    
+quality_checks:
+  - name: "completeness_check"
+    description: "Vérifier que toutes les colonnes requises sont présentes"
+    enabled: true
+  
+  - name: "uniqueness_check"
+    description: "Vérifier l'unicité des identifiants"
+    enabled: false
+  
+  - name: "range_check"
+    description: "Vérifier que les valeurs sont dans les plages attendues"
+    enabled: true
+  
+  - name: "distribution_check"
+    description: "Vérifier la distribution des features"
+    enabled: true

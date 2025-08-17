@@ -1,0 +1,42 @@
+# Configuration du modèle de classification
+
+model:
+  name: "classification_model_v1"
+  algorithm: "random_forest"  # random_forest, svm, logistic_regression
+  
+  hyperparameters:
+    random_forest:
+      n_estimators: 100
+      max_depth: 10
+      min_samples_split: 5
+      min_samples_leaf: 2
+      random_state: 42
+    
+    svm:
+      kernel: 'rbf'
+      C: 1.0
+      gamma: 'scale'
+      random_state: 42
+    
+    logistic_regression:
+      C: 1.0
+      max_iter: 1000
+      random_state: 42
+
+training:
+  test_size: 0.2
+  validation_size: 0.1
+  random_state: 42
+  cv_folds: 5
+  
+performance_thresholds:
+  min_accuracy: 0.8
+  min_precision: 0.75
+  min_recall: 0.75
+  min_f1: 0.75
+
+deployment:
+  model_registry_path: "models/"
+  model_artifact_name: "classifier.pkl"
+  scaler_artifact_name: "scaler.pkl"
+  metadata_file: "model_metadata.json"
