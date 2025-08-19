@@ -74,19 +74,7 @@ class DataLoader:
             logger.error(f"❌ Unexpected error loading config: {e}")
             raise
 
-    def validate_config(self):
-        """Validate configuration parameters"""
-        logger.info("🔍 Validating configuration...")
-        
-        required_keys = ['raw_data_path']
-        missing_keys = [key for key in required_keys if key not in self.config]
-        
-        if missing_keys:
-            logger.error(f"❌ Missing required config keys: {missing_keys}")
-            raise ValueError(f"Missing configuration keys: {missing_keys}")
-        
-        logger.info("✅ Configuration validation passed")
-        
+    
     def generate_synthetic_data(self) -> tuple:
         """Generate synthetic classification data"""
         logger.info("🎲 Generating synthetic classification data...")
@@ -153,7 +141,7 @@ class DataLoader:
             logger.info(f"🔄 Duplicate rows: {duplicates}")
             
             # Memory usage
-            memory_mb = df.memory_usage(deep=True).sum() / 1024 / 1024
+            memory_mb = df.memory_usage(deep=True).sum() /  sys.exit(1)1024 / 1024
             logger.info(f"💾 Memory usage: {memory_mb:.2f} MB")
             
             return df
@@ -248,4 +236,4 @@ if __name__ == "__main__":
         
     except Exception as e:
         logger.error(f"💥 Script failed with error: {e}")
-        sys.exit(1)
+       
