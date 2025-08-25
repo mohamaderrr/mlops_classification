@@ -20,6 +20,7 @@ COPY configs/ /opt/airflow/configs/
 
 # Installer DVC
 RUN pip install dvc[s3] boto3
+RUN pip install mlflow==2.8.1
 
 # Configuration DVC
 ENV DVC_CACHE_TYPE=symlink

@@ -1,36 +1,45 @@
-# Use Python 3.11 slim as base
-FROM python:3.11-slim
-
-# Set environment variables
-ENV LANG=C.UTF-8 \
-    LC_ALL=C.UTF-8 \
-    PYTHONUNBUFFERED=1 \
-    MLFLOW_HOME=/mlflow
+# MLflow Dockerfile
+FROM python:3.9-slim
 
 # Install system dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        build-essential \
-        curl \
-        git \
-        && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    gcc \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
 
-# Create working directory
-WORKDIR ${MLFLOW_HOME}
+# Set working directory
+WORKDIR /app
 
-# Copy requirements file
-COPY requirements.txt .
-
-# Install Python dependencies
+# Install Python dependencies directly
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir \
+    mlflow==2.8.1 \
+    psycopg2-binary==2.9.7 \
+    boto3==1.29.7 \
+    pymysql==1.1.0 \
+    cryptography==41.0.7 \
+    protobuf==4.24.4 \
+    click>=8.0
 
-# Expose MLflow default port
+# Verify mlflow installation
+RUN which mlflow && mlflow --version
+
+# Create mlflow user and directories
+RUN useradd -m -u 1001 mlflow && \
+    mkdir -p /app/mlflow && \
+    chown -R mlflow:mlflow /app
+
+# Switch to mlflow user
+USER mlflow
+
+# Expose port
 EXPOSE 5000
 
-# Set default command to run MLflow server
-CMD ["mlflow", "server", \
-     "--host", "0.0.0.0", \
-     "--port", "5000", \
-     "--backend-store-uri", "sqlite:///mlflow.db", \
-     "--default-artifact-root", "s3://mlflow-artifacts"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:5000/health || exit 1
+
+# Default command
+CMD ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000"]

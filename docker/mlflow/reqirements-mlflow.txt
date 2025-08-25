@@ -1,4 +1,6 @@
-mlflow==2.6.1
-boto3==1.26.0      # For MinIO/S3 integration
-pandas
-scikit-learn
+# MLflow requirements
+mlflow==2.8.1
+psycopg2-binary==2.9.7
+boto3==1.29.7
+pymysql==1.1.0
+cryptography==41.0.7

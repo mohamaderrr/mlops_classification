@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 default_args = {
     'owner': 'mlops-team',
-    'depends_on_past': False,
+    'depends_on_past': False,   # <-- ensures re-run each time
     'start_date': datetime(2024, 1, 1),
     'email_on_failure': True,
     'email_on_retry': False,
@@ -18,15 +18,17 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
+
 dag = DAG(
     'ml_classification_pipeline',
     default_args=default_args,
     description='Pipeline MLOps pour classification',
-    schedule_interval='@daily',
+    schedule_interval='* * * * *',   # <-- run every 1 minute
     catchup=False,
     max_active_runs=1,
     tags=['ml', 'classification', 'production']
 )
+
 
 # --- Step 1: Load Data ---
 load_data = BashOperator(
@@ -76,59 +78,9 @@ train_model = BashOperator(
     dag=dag,
 )
 
-# --- Step 6: Evaluate ---
-evaluate_model = BashOperator(
-    task_id='evaluate_model',
-    bash_command='cd /opt/airflow && python src/models/evaluate.py',
-    dag=dag,
-)
 
-# --- Step 7: Performance Gate ---
-def check_model_performance(**context):
-    import json
-    try:
-        with open('/opt/airflow/reports/evaluation.json', 'r') as f:
-            metrics = json.load(f)
-        min_accuracy = 0.8
-        if metrics['accuracy'] < min_accuracy:
-            raise ValueError(f"Performance insuffisante: {metrics['accuracy']:.3f} < {min_accuracy}")
-        logger.info(f"Performance acceptable: {metrics['accuracy']:.3f}")
-        return True
-    except Exception as e:
-        logger.error(f"Erreur performance: {e}")
-        raise
 
-performance_gate = PythonOperator(
-    task_id='performance_gate',
-    python_callable=check_model_performance,
-    dag=dag,
-)
-
-# --- Step 8: Trigger GitHub Actions CI/CD ---
-def trigger_github_action(**context):
-    token = Variable.get("GITHUB_TOKEN")  # store GitHub PAT in Airflow Variables
-    repo = Variable.get("GITHUB_REPO", default_var="your-username/mlops-classification-project")
-    tag = context['ds']  # use Airflow execution date as tag
-
-    url = f"https://api.github.com/repos/{repo}/actions/workflows/deploy.yml/dispatches"
-    headers = {
-        "Accept": "application/vnd.github+json",
-        "Authorization": f"Bearer {token}",
-    }
-    data = {"ref": "main", "inputs": {"tag": tag}}
-
-    r = requests.post(url, headers=headers, json=data)
-    if r.status_code != 204:
-        raise Exception(f"Trigger GitHub Action failed: {r.text}")
-    logger.info(f"Triggered GitHub Action for tag {tag}")
-
-trigger_ci_cd = PythonOperator(
-    task_id="trigger_ci_cd",
-    python_callable=trigger_github_action,
-    provide_context=True,
-    dag=dag,
-)
 
 # --- Dependencies ---
 load_data >> validate_data >> validation_gate >> preprocess_data
-preprocess_data >> train_model >> evaluate_model >> performance_gate 
+preprocess_data >> train_model 

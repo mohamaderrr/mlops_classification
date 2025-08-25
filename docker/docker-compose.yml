@@ -42,8 +42,14 @@ x-airflow-common:
       condition: service_healthy
     postgres:
       condition: service_healthy
+    mlflow:                # ✅ added
+        condition: service_healthy  
+    minio:                # ✅ added
+        condition: service_healthy    
   networks:
     - mlops-network
+  env_file:
+  - .env  
 
 services:
   # PostgreSQL for Airflow
@@ -98,7 +104,12 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
-
+      mlflow:                # ✅ added
+        condition: service_healthy  
+      minio:                # ✅ added
+        condition: service_healthy    
+    env_file:
+    - .env
 
   # Airflow Scheduler
   airflow-scheduler:
@@ -115,7 +126,12 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
-
+      mlflow:                # ✅ added
+        condition: service_healthy
+      minio:                # ✅ added
+        condition: service_healthy   
+    env_file:
+    - .env    
   # Airflow DAG Processor
   airflow-dag-processor:
     <<: *airflow-common
@@ -131,7 +147,12 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
-
+      mlflow:                # ✅ added
+        condition: service_healthy  
+      minio:                # ✅ added
+        condition: service_healthy     
+    env_file:
+    - .env
 
   # Airflow Worker
   airflow-worker:
@@ -156,6 +177,12 @@ services:
         condition: service_healthy
       airflow-init:
         condition: service_completed_successfully
+      mlflow:                # ✅ added
+        condition: service_healthy  
+      minio:                # ✅ added
+         condition: service_healthy   
+    env_file:
+    - .env    
 
   # Airflow Triggerer
   airflow-triggerer:
@@ -172,7 +199,10 @@ services:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
-
+      mlflow:                # ✅ added
+        condition: service_healthy
+      minio:                # ✅ added
+         condition: service_healthy
   # Airflow Init Service
   airflow-init:
     <<: *airflow-common
@@ -269,6 +299,8 @@ services:
       _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-admin}
       _PIP_ADDITIONAL_REQUIREMENTS: ''
     user: "0:0"
+    env_file:
+    - .env
 
   # Airflow CLI (for debugging)
   airflow-cli:
@@ -329,7 +361,7 @@ services:
     image: minio/minio
     ports:
       - "9000:9000"
-      - "9001:9001"
+      - "9001:9001"   # MinIO console
     volumes:
       - minio_data:/data
     environment:
@@ -339,7 +371,14 @@ services:
     restart: always
     networks:
       - mlops-network
+    healthcheck:
+     test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
+     interval: 10s
+     timeout: 5s
+     retries: 5
+     start_period: 10s  
   # MLflow Tracking Server
+
   mlflow:
     build:
       context: ..
