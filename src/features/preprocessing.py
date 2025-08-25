@@ -6,13 +6,53 @@ from pathlib import Path
 import pickle
 import yaml
 import logging
+import sys
+from datetime import datetime
+# Configure logging with detailed format
+def setup_logging():
+    """Configure logging with custom format and multiple handlers"""
+    
+    # Create custom formatter
+    formatter = logging.Formatter(
+        fmt='%(asctime)s | %(name)s | %(levelname)s | %(funcName)s:%(lineno)d | %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    
+    # Get logger
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    
+    # Clear existing handlers to avoid duplicates
+    logger.handlers.clear()
+    
+    # Console handler
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+    
+    # File handler for persistent logs
+    log_dir = Path("logs")
+    log_dir.mkdir(exist_ok=True)
+    
+    file_handler = logging.FileHandler(
+        log_dir / f"preprocing_{datetime.now().strftime('%Y%m%d')}.log",
+        mode='a',
+        encoding='utf-8'
+    )
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    
+    return logger
 
-logger = logging.getLogger(__name__)
+# Initialize logger
+logger = setup_logging()
+
 
 class DataPreprocessor:
     def __init__(self, config_path: str = "params.yaml"):
-        with open(config_path, 'r') as f:
-            self.config = yaml.safe_load(f)['preprocessing']
+    
         
         self.scaler = StandardScaler()
         self.label_encoder = LabelEncoder()

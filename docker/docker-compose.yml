@@ -34,6 +34,7 @@ x-airflow-common:
     - ../models:/opt/airflow/models
     - ../reports:/opt/airflow/reports
     - /var/run/docker.sock:/var/run/docker.sock
+    - ../data:/opt/airflow/data
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on

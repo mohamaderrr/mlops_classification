@@ -141,7 +141,7 @@ class DataLoader:
             logger.info(f"🔄 Duplicate rows: {duplicates}")
             
             # Memory usage
-            memory_mb = df.memory_usage(deep=True).sum() /  sys.exit(1)1024 / 1024
+            memory_mb = df.memory_usage(deep=True).sum() / 1024 / 1024
             logger.info(f"💾 Memory usage: {memory_mb:.2f} MB")
             
             return df
@@ -155,7 +155,10 @@ class DataLoader:
         logger.info("💾 Saving data to file...")
         
         try:
-            output_path = Path(self.config['raw_data_path'])
+            output_path = Path(
+    self.config.get('raw_data_path', 'data/raw/synthetic_data.csv')
+)
+
             logger.info(f"📁 Output path: {output_path}")
             
             # Create directory if it doesn't exist
@@ -192,8 +195,7 @@ class DataLoader:
         total_start_time = time.time()
         
         try:
-            # Step 1: Validate configuration
-            self.validate_config()
+            
             
             # Step 2: Generate synthetic data
             X, y = self.generate_synthetic_data()
